@@ -1,4 +1,3 @@
-// src/components/shared/MatrixModal.tsx
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,6 +8,7 @@ interface MatrixModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  isMobile?: boolean;
 }
 
 const modalVariants = {
@@ -40,8 +40,13 @@ const overlayVariants = {
   exit: { opacity: 0 }
 };
 
-const MatrixModal = ({ isOpen, onClose, title, children }: MatrixModalProps) => {
-  // Handle escape key
+const MatrixModal = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children,
+  isMobile = false 
+}: MatrixModalProps) => {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -70,19 +75,23 @@ const MatrixModal = ({ isOpen, onClose, title, children }: MatrixModalProps) => 
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative w-[90%] h-[85vh] max-w-7xl 
-                     bg-black border border-green-500/50 rounded-lg
-                     flex flex-col overflow-hidden"
+            className={`
+              relative 
+              ${isMobile ? 'w-[95%] h-[80vh]' : 'w-[90%] h-[85vh]'} 
+              max-w-7xl 
+              bg-black border border-green-500/50 rounded-lg
+              flex flex-col overflow-hidden
+            `}
             style={{ 
               boxShadow: '0 0 50px rgba(0, 255, 0, 0.15)',
             }}
           >
             {/* Header */}
-            <div className="p-8 border-b border-green-500/30">
+            <div className={`${isMobile ? 'p-4' : 'p-8'} border-b border-green-500/30`}>
               <motion.h2
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-4xl font-bold text-green-400 text-center"
+                className={`${isMobile ? 'text-2xl' : 'text-4xl'} font-bold text-green-400 text-center`}
               >
                 {title}
               </motion.h2>
@@ -90,10 +99,15 @@ const MatrixModal = ({ isOpen, onClose, title, children }: MatrixModalProps) => 
               {/* Close button */}
               <button
                 onClick={onClose}
-                className="absolute top-6 right-6 text-green-500 hover:text-green-400
-                         w-10 h-10 flex items-center justify-center rounded-full
-                         border border-green-500 hover:border-green-400
-                         transition-colors duration-200 text-xl"
+                className={`
+                  absolute ${isMobile ? 'top-3 right-3' : 'top-6 right-6'}
+                  text-green-500 hover:text-green-400
+                  ${isMobile ? 'w-8 h-8' : 'w-10 h-10'}
+                  flex items-center justify-center rounded-full
+                  border border-green-500 hover:border-green-400
+                  transition-colors duration-200
+                  ${isMobile ? 'text-lg' : 'text-xl'}
+                `}
               >
                 ✕
               </button>
@@ -103,9 +117,14 @@ const MatrixModal = ({ isOpen, onClose, title, children }: MatrixModalProps) => 
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex-1 p-8 overflow-y-auto"
+              className={`flex-1 ${isMobile ? 'p-4' : 'p-8'} overflow-y-auto`}
             >
-              <div className="max-w-4xl mx-auto text-green-300 text-xl leading-relaxed">
+              <div className={`
+                max-w-4xl mx-auto 
+                text-green-300 
+                ${isMobile ? 'text-base' : 'text-xl'}
+                leading-relaxed
+              `}>
                 {children}
               </div>
             </motion.div>
