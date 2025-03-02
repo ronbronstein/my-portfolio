@@ -1,0 +1,69 @@
+.
+├── README.md
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── public
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── sanity
+│   ├── schema.ts
+│   └── schemas
+│       ├── music.ts
+│       └── project.ts
+├── sanity.cli.ts
+├── sanity.config.ts
+├── sessions
+│   ├── session1
+│   │   ├── BaseNode_session1.tsx
+│   │   ├── MatrixModal_session1.tsx
+│   │   ├── MatrixRain_session1.tsx
+│   │   ├── NodeSystem_session1.tsx
+│   │   ├── layout_session1.tsx
+│   │   ├── nodeContent_session1.ts
+│   │   ├── page_session1.tsx
+│   │   ├── session-summery.txt
+│   │   ├── theme_session1.ts
+│   │   └── tree_session1.txt
+│   └── session2
+│       └── tree_session2.txt
+├── src
+│   ├── app
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── studio
+│   │       └── [[...tool]]
+│   │           └── page.tsx
+│   ├── components
+│   │   ├── matrix
+│   │   │   └── MatrixRain.tsx
+│   │   ├── nodes
+│   │   │   ├── BaseNode.tsx
+│   │   │   ├── DistortionEffect.tsx
+│   │   │   └── NodeSystem.tsx
+│   │   └── shared
+│   │       └── MatrixModal.tsx
+│   ├── lib
+│   │   ├── nodeContent.ts
+│   │   └── theme.ts
+│   └── sanity
+│       ├── env.ts
+│       ├── lib
+│       │   ├── client.ts
+│       │   ├── image.ts
+│       │   └── live.ts
+│       ├── schemaTypes
+│       │   └── index.ts
+│       └── structure.ts
+├── tailwind.config.ts
+└── tsconfig.json
+
+19 directories, 48 files

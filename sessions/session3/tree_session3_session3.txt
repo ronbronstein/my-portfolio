@@ -1,0 +1,96 @@
+.
+├── README.md
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── public
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── sanity
+│   ├── schema.ts
+│   └── schemas
+│       ├── essay.ts
+│       ├── music.ts
+│       ├── project.ts
+│       ├── sticker.ts
+│       └── stickerCollection.ts
+├── sanity.cli.ts
+├── sanity.config.ts
+├── sessions
+│   ├── session1
+│   │   ├── BaseNode_session1.tsx
+│   │   ├── MatrixModal_session1.tsx
+│   │   ├── MatrixRain_session1.tsx
+│   │   ├── NodeSystem_session1.tsx
+│   │   ├── layout_session1.tsx
+│   │   ├── nodeContent_session1.ts
+│   │   ├── page_session1.tsx
+│   │   ├── session-summery.txt
+│   │   ├── theme_session1.ts
+│   │   └── tree_session1.txt
+│   ├── session2
+│   │   ├── BaseNode_session2.tsx
+│   │   ├── DistortionEffect_session2.tsx
+│   │   ├── env.local_session2.template
+│   │   ├── sanity
+│   │   │   ├── schema_session2.ts
+│   │   │   └── schemas
+│   │   │       ├── music_session2.ts
+│   │   │       └── project_session2.ts
+│   │   ├── summary_session2.md
+│   │   └── tree_session2.txt
+│   └── session3
+│       ├── BaseNode.tsx
+│       ├── DistortionEffect.tsx
+│       ├── MatrixModal.tsx
+│       ├── MatrixRain.tsx
+│       ├── NodeSystem.tsx
+│       ├── essay.ts
+│       ├── music.ts
+│       ├── nodeContent.ts
+│       ├── project.ts
+│       ├── schema.ts
+│       ├── sticker.ts
+│       ├── stickerCollection.ts
+│       ├── theme.ts
+│       └── tree_session3.txt
+├── src
+│   ├── app
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── studio
+│   │       └── [[...tool]]
+│   │           └── page.tsx
+│   ├── components
+│   │   ├── matrix
+│   │   │   └── MatrixRain.tsx
+│   │   ├── nodes
+│   │   │   ├── BaseNode.tsx
+│   │   │   ├── DistortionEffect.tsx
+│   │   │   └── NodeSystem.tsx
+│   │   └── shared
+│   │       └── MatrixModal.tsx
+│   ├── lib
+│   │   ├── nodeContent.ts
+│   │   └── theme.ts
+│   └── sanity
+│       ├── env.ts
+│       ├── lib
+│       │   ├── client.ts
+│       │   ├── image.ts
+│       │   └── live.ts
+│       ├── schemaTypes
+│       │   └── index.ts
+│       └── structure.ts
+├── tailwind.config.ts
+└── tsconfig.json
+
+22 directories, 72 files
