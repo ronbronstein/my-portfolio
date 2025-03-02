@@ -2,7 +2,6 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
-import { useSound } from '@/components/sound/SoundProvider';
 
 interface MatrixModalProps {
   isOpen: boolean;
@@ -48,20 +47,13 @@ const MatrixModal = ({
   children,
   isMobile = false 
 }: MatrixModalProps) => {
-  const { playModalOpen, playModalClose } = useSound();
-
-  // Play sound effects on open/close
   useEffect(() => {
-    if (isOpen) {
-      playModalOpen();
-    }
-  }, [isOpen, playModalOpen]);
-
-  // Handle close with sound
-  const handleClose = () => {
-    playModalClose();
-    onClose();
-  };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
 
   return (
     <AnimatePresence>
@@ -73,7 +65,7 @@ const MatrixModal = ({
             initial="hidden"
             animate="visible"
             exit="exit"
-            onClick={handleClose}
+            onClick={onClose}
             className="absolute inset-0 bg-black/85"
           />
 
@@ -106,7 +98,7 @@ const MatrixModal = ({
 
               {/* Close button */}
               <button
-                onClick={handleClose}
+                onClick={onClose}
                 className={`
                   absolute ${isMobile ? 'top-3 right-3' : 'top-6 right-6'}
                   text-green-500 hover:text-green-400
