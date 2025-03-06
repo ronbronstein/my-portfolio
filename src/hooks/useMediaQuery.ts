@@ -1,9 +1,12 @@
 // src/hooks/useMediaQuery.ts
+
+'use client';
+
 import { useState, useEffect } from 'react';
 
 export function useMediaQuery(query: string): boolean {
-  // Initialize to undefined to avoid hydration mismatch
-  const [matches, setMatches] = useState<boolean | undefined>(undefined);
+  // Initialize to false for SSR to avoid hydration mismatch
+  const [matches, setMatches] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -27,7 +30,6 @@ export function useMediaQuery(query: string): boolean {
     return () => mediaQuery.removeEventListener('change', handler);
   }, [query]); // Only re-run if query changes
 
-  // During SSR and initial client render, return null/undefined/false value
-  // that won't affect layout to avoid hydration mismatch
-  return mounted ? Boolean(matches) : false;
+  // Always return false during SSR to avoid hydration mismatch
+  return mounted ? matches : false;
 }

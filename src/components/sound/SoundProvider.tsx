@@ -1,3 +1,5 @@
+// src/components/sound/SoundProvider.tsx
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -12,14 +14,21 @@ interface SoundContextType {
   playModalClose: () => void;
 }
 
-const SoundContext = createContext<SoundContextType | undefined>(undefined);
+const SoundContext = createContext<SoundContextType>({
+  isMuted: true,
+  toggleMute: () => {},
+  playNodeUnlock: () => {},
+  playNodeSelect: () => {},
+  playModalOpen: () => {},
+  playModalClose: () => {}
+});
 
 export function SoundProvider({ children }: { children: React.ReactNode }) {
   const [isMuted, setIsMuted] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setIsInitialized(true);
+    setMounted(true);
     
     // Audio context will be initialized on first user interaction
     // through the click event listener in MatrixSoundEffects
@@ -30,14 +39,14 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const playSound = useCallback((soundFunction: () => void) => {
-    if (!isMuted) {
+    if (!isMuted && mounted) {
       try {
         soundFunction();
       } catch (error) {
         console.error('Error playing sound:', error);
       }
     }
-  }, [isMuted]);
+  }, [isMuted, mounted]);
 
   const value = {
     isMuted,
@@ -51,7 +60,7 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
   return (
     <SoundContext.Provider value={value}>
       {children}
-      {isInitialized && (
+      {mounted && (
         <button
           onClick={toggleMute}
           className="fixed bottom-4 right-4 z-50 p-2 rounded-full bg-black/50 border border-green-500/30 hover:border-green-500/60 transition-colors"
@@ -70,8 +79,5 @@ export function SoundProvider({ children }: { children: React.ReactNode }) {
 
 export function useSound() {
   const context = useContext(SoundContext);
-  if (context === undefined) {
-    throw new Error('useSound must be used within a SoundProvider');
-  }
   return context;
 }

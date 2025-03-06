@@ -1,3 +1,5 @@
+// src/components/nodes/NodeSystem.tsx
+
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -14,35 +16,7 @@ import MusicContent from '@/components/content/MusicContent';
 import EssayContent from '@/components/content/EssayContent';
 import StickerContent from '@/components/content/StickerContent';
 import { Project, Music, Essay, Sticker } from '@/lib/sanity.client';
-
-// Sound hook for node interaction sounds
-const useSound = () => {
-  const playNodeUnlock = () => {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const audio = new Audio('/sounds/node-unlock.mp3');
-      audio.volume = 0.5;
-      audio.play();
-    } catch (err) {
-      console.log('Error playing sound:', err);
-    }
-  };
-
-  const playNodeSelect = () => {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      const audio = new Audio('/sounds/node-select.mp3');
-      audio.volume = 0.4;
-      audio.play();
-    } catch (err) {
-      console.log('Error playing sound:', err);
-    }
-  };
-
-  return { playNodeUnlock, playNodeSelect };
-};
+import { useSound } from '@/components/sound/SoundProvider';
 
 interface NodeType {
   id: string;
@@ -73,8 +47,8 @@ const NodeSystem = () => {
   const [activeNodeId, setActiveNodeId] = useState<string>('intro');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Viewport dimensions
-  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
+  // Viewport dimensions - use null for initial SSR state
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   
   // Node content state
   const [selectedNode, setSelectedNode] = useState<keyof SelectedContentType | null>(null);
@@ -128,6 +102,9 @@ const NodeSystem = () => {
 
   // Calculate node positions based on screen size - safely
   const calculateNodePositions = useMemo(() => {
+    // Don't calculate if dimensions aren't set yet
+    if (dimensions.width === 0) return [];
+    
     const spacing = isMobile ? 180 : 300;
     const nodeSize = isMobile ? 80 : 120;
     
@@ -227,14 +204,14 @@ const NodeSystem = () => {
 
   // Update nodes on screen size change or component mount
   useEffect(() => {
-    if (!mounted || loading || !isClient) return;
+    if (!mounted || loading || !isClient || dimensions.width === 0) return;
 
     const updateNodes = () => {
       setNodes(calculateNodePositions);
     };
 
     updateNodes();
-  }, [mounted, loading, calculateNodePositions, isClient]);
+  }, [mounted, loading, calculateNodePositions, isClient, dimensions]);
 
   // Handle node click with sound
   const handleNodeClick = (nodeId: string) => {
@@ -282,7 +259,7 @@ const NodeSystem = () => {
 
   // Draw connections
   useEffect(() => {
-    if (!mounted || loading || !isClient) return;
+    if (!mounted || loading || !isClient || nodes.length === 0) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -291,22 +268,32 @@ const NodeSystem = () => {
     if (!ctx) return;
 
     const handleResize = () => {
+      if (!canvas) return; // Extra null check here
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      drawConnections(); // Call after resize
     };
 
+    // Setup canvas
     handleResize();
     window.addEventListener('resize', handleResize);
 
     // Draw connections
-    const drawConnections = () => {
+    function drawConnections() {
+      if (!canvas || !ctx) return; // Extra null checks
+      
+      // Clear the entire canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Draw connections between nodes
       nodes.forEach(node => {
         if (node.dependencies) {
           node.dependencies.forEach(depId => {
             const dependentNode = nodes.find(n => n.id === depId);
             if (dependentNode) {
+              // Double check ctx isn't null before using it
+              if (!ctx) return;
+              
               ctx.beginPath();
 
               const nodeOffset = isMobile ? 40 : 60;
@@ -334,10 +321,12 @@ const NodeSystem = () => {
           });
         }
       });
-    };
+    }
 
+    // Initial draw
     drawConnections();
 
+    // Cleanup on unmount
     return () => {
       window.removeEventListener('resize', handleResize);
     };

@@ -1,13 +1,22 @@
 // src/components/matrix/MatrixRain.tsx
+
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { MATRIX_THEME, MATRIX_CHARS } from '@/lib/theme';
+import React, { useEffect, useRef, useState } from 'react';
+
+const MATRIX_CHARS = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
 
 export const MatrixRain = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -16,9 +25,11 @@ export const MatrixRain = () => {
 
     // Set canvas size
     const resizeCanvas = () => {
+      if (!canvas) return;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
+    
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
@@ -37,6 +48,8 @@ export const MatrixRain = () => {
 
     // Animation loop
     const draw = () => {
+      if (!canvas || !context) return;
+      
       // Calculate current opacity based on time
       const elapsedTime = Date.now() - startTime;
       if (elapsedTime < fadeDuration) {
@@ -49,8 +62,8 @@ export const MatrixRain = () => {
       context.fillStyle = 'rgba(0, 0, 0, 0.1)';
       context.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Set the main text color
-      context.fillStyle = MATRIX_THEME.colors.text.secondary;
+      // Set the main text color - Using explicit green color
+      context.fillStyle = '#00FF00';
       context.font = `${fontSize}px monospace`;
       context.globalAlpha = currentOpacity;
 
@@ -80,14 +93,22 @@ export const MatrixRain = () => {
       draw();
       animationId = requestAnimationFrame(animate);
     };
+    
     animate();
 
     // Cleanup
     return () => {
       window.removeEventListener('resize', resizeCanvas);
-      cancelAnimationFrame(animationId);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
     };
-  }, []);
+  }, [isClient]); // Only run when client-side rendering is active
+
+  // Don't render anything server-side to prevent hydration errors
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <canvas
