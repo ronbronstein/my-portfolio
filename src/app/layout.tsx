@@ -2,7 +2,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-// Import the original MatrixRain instead of EnhancedMatrixRain
 import MatrixRain from '@/components/matrix/MatrixRain'; 
 import ClientOnly from '@/components/ClientOnly';
 

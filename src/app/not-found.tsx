@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import GlitchText from '@/components/matrix/GlitchText';
 import TextDecoder from '@/components/matrix/TextDecoder';
-import EnhancedMatrixRain from '@/components/matrix/EnhancedMatrixRain';
+import MatrixRain from '@/components/matrix/MatrixRain';
 
 export default function NotFound() {
   const [showHomeLink, setShowHomeLink] = useState(false);
@@ -21,7 +21,7 @@ export default function NotFound() {
   
   return (
     <div className="h-screen w-screen flex flex-col items-center justify-center bg-black text-green-500">
-      <EnhancedMatrixRain />
+      <MatrixRain />
       
       <div className="text-center z-10 space-y-6">
         <div className="text-6xl font-bold mb-4">
