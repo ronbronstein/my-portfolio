@@ -1,5 +1,4 @@
 // src/components/matrix/LoadingSequence.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,71 +7,43 @@ import ClientOnly from '../ClientOnly';
 
 const LoadingSequence = () => {
   const [displayText, setDisplayText] = useState('');
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
 
-  // Set of messages to display - only the last word changes
-  const messages = [
-    { prefix: "Hello, ", word: "world..." },
-    { prefix: "Hello, ", word: "people..." },
-    { prefix: "Hello, ", word: "creatures..." },
-    { prefix: "Welcome to my ", word: "reality." },
-  ];
+  // Simplified loading message
+  const message = "Accessing The Matrix...";
 
   // Effect to handle the animation
   useEffect(() => {
-    // Calculate timings to ensure consistent duration
-    const totalDuration = 5000; // 5 seconds in ms
-    const phaseTime = totalDuration / messages.length;
-    const typingSpeed = 50; // ms per character
-
-    let animationTimer: NodeJS.Timeout;
-    let masterTimer: NodeJS.Timeout;
-
-    // Function to display each phase
-    const animatePhase = (phaseIndex: number) => {
-      if (phaseIndex >= messages.length) {
-        setIsComplete(true);
-        return;
+    let charIndex = 0;
+    let typingInterval: NodeJS.Timeout;
+    
+    const typeWriter = () => {
+      if (charIndex <= message.length) {
+        setDisplayText(message.substring(0, charIndex));
+        charIndex++;
+        typingInterval = setTimeout(typeWriter, 100);
+      } else {
+        // Complete after full message is displayed
+        setTimeout(() => {
+          setIsComplete(true);
+        }, 800);
       }
-
-      const { prefix, word } = messages[phaseIndex];
-      
-      // When starting a new phase, immediately show the prefix
-      setDisplayText(prefix);
-      
-      let charIndex = 0;
-      const typeWord = () => {
-        if (charIndex <= word.length) {
-          setDisplayText(prefix + word.substring(0, charIndex));
-          charIndex++;
-          animationTimer = setTimeout(typeWord, typingSpeed);
-        } else if (phaseIndex < messages.length - 1) {
-          // Schedule next phase after a delay
-          animationTimer = setTimeout(() => {
-            animatePhase(phaseIndex + 1);
-          }, 700); // Pause between messages
-        }
-      };
-      
-      typeWord();
     };
-
-    // Start the animation
-    const startTimer = setTimeout(() => {
-      animatePhase(0);
-    }, 300);
     
-    // Master timer to ensure we complete in exactly 5 seconds
-    masterTimer = setTimeout(() => {
+    // Start typing after a short delay
+    const startDelay = setTimeout(() => {
+      typeWriter();
+    }, 500);
+    
+    // Safety timeout to ensure loading completes
+    const safetyTimeout = setTimeout(() => {
       setIsComplete(true);
-    }, totalDuration + 500);
+    }, 5000);
     
-    // Cleanup
     return () => {
-      clearTimeout(animationTimer);
-      clearTimeout(masterTimer);
-      clearTimeout(startTimer);
+      clearTimeout(typingInterval);
+      clearTimeout(startDelay);
+      clearTimeout(safetyTimeout);
     };
   }, []);
 

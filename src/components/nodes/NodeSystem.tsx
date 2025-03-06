@@ -1,22 +1,19 @@
 // src/components/nodes/NodeSystem.tsx
-
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BaseNode from './BaseNode';
 import MatrixModal from '../shared/MatrixModal';
-import { nodeContent } from '@/lib/nodeContent';
+import { nodeContent, lockMessages } from '@/data/nodeContent';
+import { projects } from '@/data/projects';
+import { playlists } from '@/data/music';
+import { stickers, shopUrl } from '@/data/stickers';
+import { essays, substackUrl } from '@/data/essays';
 import { MATRIX_THEME } from '@/lib/theme';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import LoadingSequence from '../matrix/LoadingSequence';
-import { useSanityContentContext } from '@/components/SanityContentProvider';
-import ProjectContent from '@/components/content/ProjectContent';
-import MusicContent from '@/components/content/MusicContent';
-import EssayContent from '@/components/content/EssayContent';
-import StickerContent from '@/components/content/StickerContent';
-import { Project, Music, Essay, Sticker } from '@/lib/sanity.client';
-import { useSound } from '@/components/sound/SoundProvider';
+import ClientOnly from '../ClientOnly';
 
 interface NodeType {
   id: string;
@@ -25,15 +22,7 @@ interface NodeType {
   y: number;
   isLocked: boolean;
   dependencies?: string[];
-}
-
-// Type for selected content based on node type
-type SelectedContentType = {
-  work: Project | null;
-  music: Music | null;
-  essays: Essay | null;
-  stickers: Sticker | null;
-  intro: null;
+  lockMessage?: string;
 }
 
 const NodeSystem = () => {
@@ -45,20 +34,12 @@ const NodeSystem = () => {
   const [loading, setLoading] = useState(true);
   const [nodes, setNodes] = useState<NodeType[]>([]);
   const [activeNodeId, setActiveNodeId] = useState<string>('intro');
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [showLockMessage, setShowLockMessage] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Viewport dimensions - use null for initial SSR state
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  
-  // Node content state
-  const [selectedNode, setSelectedNode] = useState<keyof SelectedContentType | null>(null);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  
-  // Get Sanity content
-  const { projects, music, essays, stickers, loading: contentLoading } = useSanityContentContext();
-  
-  // Get sound functions
-  const { playNodeUnlock, playNodeSelect } = useSound();
   
   // Detect mobile screens - safely with hydration in mind
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -94,7 +75,7 @@ const NodeSystem = () => {
       // Give the loading sequence time to complete
       setTimeout(() => {
         setLoading(false);
-      }, 4000); // Adjust this time to match your loading sequence duration
+      }, 3000); // Shorter loading sequence
     }, 500);
 
     return () => clearTimeout(timer);
@@ -122,7 +103,8 @@ const NodeSystem = () => {
           title: 'Intro',
           x: centerX,
           y: isSmallMobile ? 100 : centerY - spacing,
-          isLocked: false 
+          isLocked: false,
+          lockMessage: '' 
         },
         { 
           id: 'work', 
@@ -130,7 +112,8 @@ const NodeSystem = () => {
           x: centerX - spacing / 2,
           y: isSmallMobile ? 220 : centerY,
           isLocked: true,
-          dependencies: ['intro']
+          dependencies: ['intro'],
+          lockMessage: lockMessages.work
         },
         { 
           id: 'music', 
@@ -138,7 +121,8 @@ const NodeSystem = () => {
           x: centerX + spacing / 2,
           y: isSmallMobile ? 340 : centerY,
           isLocked: true,
-          dependencies: ['intro']
+          dependencies: ['intro'],
+          lockMessage: lockMessages.music
         },
         { 
           id: 'stickers', 
@@ -146,7 +130,8 @@ const NodeSystem = () => {
           x: centerX - spacing / 2,
           y: isSmallMobile ? 460 : centerY + spacing,
           isLocked: true,
-          dependencies: ['work']
+          dependencies: ['work'],
+          lockMessage: lockMessages.stickers
         },
         { 
           id: 'essays', 
@@ -154,7 +139,8 @@ const NodeSystem = () => {
           x: centerX + spacing / 2,
           y: isSmallMobile ? 580 : centerY + spacing,
           isLocked: true,
-          dependencies: ['music']
+          dependencies: ['music'],
+          lockMessage: lockMessages.essays
         }
       ];
     }
@@ -165,7 +151,8 @@ const NodeSystem = () => {
         title: 'Introduction',
         x: centerX,
         y: centerY,
-        isLocked: false 
+        isLocked: false,
+        lockMessage: ''
       },
       { 
         id: 'work', 
@@ -173,7 +160,8 @@ const NodeSystem = () => {
         x: centerX - spacing * 0.8,
         y: centerY - spacing * 0.6,
         isLocked: true,
-        dependencies: ['intro']
+        dependencies: ['intro'],
+        lockMessage: lockMessages.work
       },
       { 
         id: 'music', 
@@ -181,7 +169,8 @@ const NodeSystem = () => {
         x: centerX + spacing * 0.7,
         y: centerY - spacing * 0.4,
         isLocked: true,
-        dependencies: ['intro']
+        dependencies: ['intro'],
+        lockMessage: lockMessages.music
       },
       { 
         id: 'stickers', 
@@ -189,7 +178,8 @@ const NodeSystem = () => {
         x: centerX - spacing * 0.5,
         y: centerY + spacing * 0.7,
         isLocked: true,
-        dependencies: ['work']
+        dependencies: ['work'],
+        lockMessage: lockMessages.stickers
       },
       { 
         id: 'essays', 
@@ -197,7 +187,8 @@ const NodeSystem = () => {
         x: centerX + spacing * 0.9,
         y: centerY + spacing * 0.5,
         isLocked: true,
-        dependencies: ['music']
+        dependencies: ['music'],
+        lockMessage: lockMessages.essays
       }
     ];
   }, [isMobile, isSmallMobile, dimensions]); // Also depend on dimensions 
@@ -213,45 +204,30 @@ const NodeSystem = () => {
     updateNodes();
   }, [mounted, loading, calculateNodePositions, isClient, dimensions]);
 
-  // Handle node click with sound
+  // Handle node click
   const handleNodeClick = (nodeId: string) => {
     if (!isClient) return; // Safety check
     
     const node = nodes.find(n => n.id === nodeId);
-    if (node && !node.isLocked) {
-      setActiveNodeId(nodeId);
-      // Type cast to ensure type safety
-      setSelectedNode(nodeId as keyof SelectedContentType);
-      playNodeSelect();
-      
-      // Set default content item if available based on node type
-      if (nodeId === 'work' && projects.length > 0) {
-        setSelectedItemId(projects[0]._id);
-      } else if (nodeId === 'music' && music.length > 0) {
-        setSelectedItemId(music[0]._id);
-      } else if (nodeId === 'essays' && essays.length > 0) {
-        setSelectedItemId(essays[0]._id);
-      } else if (nodeId === 'stickers' && stickers.length > 0) {
-        setSelectedItemId(stickers[0]._id);
-      } else {
-        setSelectedItemId(null);
-      }
-      
-      // Check if any nodes will be unlocked
-      const willUnlockNodes = nodes.some(n => 
-        n.dependencies?.includes(nodeId) && n.isLocked
-      );
-
-      if (willUnlockNodes) {
-        playNodeUnlock();
-      }
-      
+    if (!node) return;
+    
+    if (node.isLocked) {
+      // Show lock message
+      setShowLockMessage(node.lockMessage || null);
+      setTimeout(() => setShowLockMessage(null), 3000);
+      return;
+    }
+    
+    setActiveNodeId(nodeId);
+    setSelectedNode(nodeId);
+    
+    // Check which nodes to unlock based on nodeContent
+    const nodeInfo = nodeContent[nodeId as keyof typeof nodeContent];
+    if (nodeInfo && nodeInfo.unlocksNodes) {
       setNodes(prevNodes => 
         prevNodes.map(n => ({
           ...n,
-          isLocked: n.dependencies?.includes(nodeId) 
-            ? false 
-            : n.isLocked
+          isLocked: nodeInfo.unlocksNodes.includes(n.id) ? false : n.isLocked
         }))
       );
     }
@@ -332,125 +308,177 @@ const NodeSystem = () => {
     };
   }, [nodes, activeNodeId, isMobile, mounted, loading, isClient]);
 
-  // Get the selected work content
-  const selectedWorkContent = useMemo(() => {
-    if (selectedNode !== 'work' || !selectedItemId) return null;
-    return projects.find(p => p._id === selectedItemId) || null;
-  }, [selectedNode, selectedItemId, projects]);
-
-  // Get the selected music content
-  const selectedMusicContent = useMemo(() => {
-    if (selectedNode !== 'music' || !selectedItemId) return null;
-    return music.find(m => m._id === selectedItemId) || null;
-  }, [selectedNode, selectedItemId, music]);
-
-  // Get the selected essay content
-  const selectedEssayContent = useMemo(() => {
-    if (selectedNode !== 'essays' || !selectedItemId) return null;
-    return essays.find(e => e._id === selectedItemId) || null;
-  }, [selectedNode, selectedItemId, essays]);
-
-  // Get the selected sticker content
-  const selectedStickerContent = useMemo(() => {
-    if (selectedNode !== 'stickers' || !selectedItemId) return null;
-    return stickers.find(s => s._id === selectedItemId) || null;
-  }, [selectedNode, selectedItemId, stickers]);
-
-  // Get the modal title
-  const getModalTitle = () => {
-    if (selectedNode === 'work' && selectedWorkContent) {
-      return selectedWorkContent.title;
-    } else if (selectedNode === 'music' && selectedMusicContent) {
-      return selectedMusicContent.title;
-    } else if (selectedNode === 'essays' && selectedEssayContent) {
-      return selectedEssayContent.title;
-    } else if (selectedNode === 'stickers' && selectedStickerContent) {
-      return selectedStickerContent.title;
-    } else if (selectedNode) {
-      return nodeContent[selectedNode]?.title || '';
-    }
-    
-    return '';
-  };
-
-  // Render the appropriate content
-  const renderContent = () => {
+  // Get content based on node type
+  const getNodeContent = () => {
     if (!selectedNode) return null;
     
-    // For the intro node, use static content
-    if (selectedNode === 'intro') {
-      return (
-        <div className="whitespace-pre-line">
-          {nodeContent[selectedNode]?.content || ''}
-        </div>
-      );
-    }
-    
-    // Work content
-    if (selectedNode === 'work') {
-      if (selectedWorkContent) {
-        return <ProjectContent project={selectedWorkContent} />;
-      } else if (contentLoading) {
-        return <div className="text-green-400">Loading work content...</div>;
-      } else {
+    switch (selectedNode) {
+      case 'intro':
         return (
           <div className="whitespace-pre-line">
-            {nodeContent[selectedNode]?.content || ''}
+            {nodeContent.intro.content}
           </div>
         );
-      }
-    }
-    
-    // Music content
-    if (selectedNode === 'music') {
-      if (selectedMusicContent) {
-        return <MusicContent music={selectedMusicContent} />;
-      } else if (contentLoading) {
-        return <div className="text-green-400">Loading music content...</div>;
-      } else {
+      case 'work':
         return (
-          <div className="whitespace-pre-line">
-            {nodeContent[selectedNode]?.content || ''}
+          <div className="space-y-6">
+            <div className="whitespace-pre-line mb-8">
+              {nodeContent.work.content}
+            </div>
+            
+            <h3 className="text-xl text-green-400 mb-4">Featured Projects</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {projects.map(project => (
+                <div 
+                  key={project.id} 
+                  className="border border-green-500/30 bg-black/30 p-4 rounded-lg"
+                >
+                  <h4 className="text-lg text-green-400 mb-2">{project.title}</h4>
+                  <p className="text-green-300 mb-3">{project.description}</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {project.technologies.map(tech => (
+                      <span 
+                        key={tech} 
+                        className="px-2 py-1 text-xs bg-green-900/30 text-green-300 rounded-full"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                  {project.link && (
+                    <a 
+                      href={project.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-green-400 hover:text-green-300 underline"
+                    >
+                      Visit Project →
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         );
-      }
-    }
-    
-    // Essay content
-    if (selectedNode === 'essays') {
-      if (selectedEssayContent) {
-        return <EssayContent essay={selectedEssayContent} />;
-      } else if (contentLoading) {
-        return <div className="text-green-400">Loading essay content...</div>;
-      } else {
+      case 'music':
         return (
-          <div className="whitespace-pre-line">
-            {nodeContent[selectedNode]?.content || ''}
+          <div className="space-y-6">
+            <div className="whitespace-pre-line mb-8">
+              {nodeContent.music.content}
+            </div>
+            
+            <h3 className="text-xl text-green-400 mb-4">Featured Playlists</h3>
+            <div className="space-y-8">
+              {playlists.map(playlist => (
+                <div key={playlist.id} className="space-y-4">
+                  <h4 className="text-lg text-green-400">{playlist.title}</h4>
+                  <p className="text-green-300">{playlist.description}</p>
+                  <div className="w-full border border-green-500/30 rounded-md overflow-hidden bg-black/70">
+                    <iframe
+                      src={playlist.spotifyEmbedUrl}
+                      width="100%"
+                      height="352"
+                      frameBorder="0"
+                      allowTransparency={true}
+                      allow="encrypted-media"
+                      className="w-full"
+                    ></iframe>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         );
-      }
-    }
-    
-    // Sticker content
-    if (selectedNode === 'stickers') {
-      if (selectedStickerContent) {
-        return <StickerContent sticker={selectedStickerContent} />;
-      } else if (contentLoading) {
-        return <div className="text-green-400">Loading sticker content...</div>;
-      } else {
+      case 'stickers':
         return (
-          <div className="whitespace-pre-line">
-            {nodeContent[selectedNode]?.content || ''}
+          <div className="space-y-6">
+            <div className="whitespace-pre-line mb-8">
+              {nodeContent.stickers.content}
+            </div>
+            
+            <h3 className="text-xl text-green-400 mb-4">Featured Stickers</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {stickers.map(sticker => (
+                <div 
+                  key={sticker.id} 
+                  className="border border-green-500/30 bg-black/30 p-4 rounded-lg"
+                >
+                  <h4 className="text-lg text-green-400 mb-2">{sticker.title}</h4>
+                  <p className="text-green-300 mb-3">{sticker.description}</p>
+                  {sticker.shopUrl && (
+                    <a 
+                      href={sticker.shopUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-green-400 hover:text-green-300 underline"
+                    >
+                      View in Shop →
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-8 text-center">
+              <a 
+                href={shopUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block px-6 py-3 bg-green-900/40 hover:bg-green-800/60 text-green-300 border border-green-500/40 rounded transition-colors"
+              >
+                Visit Full Sticker Shop
+              </a>
+            </div>
           </div>
         );
-      }
+      case 'essays':
+        return (
+          <div className="space-y-6">
+            <div className="whitespace-pre-line mb-8">
+              {nodeContent.essays.content}
+            </div>
+            
+            <h3 className="text-xl text-green-400 mb-4">Featured Essays</h3>
+            <div className="space-y-6">
+              {essays.map(essay => (
+                <div 
+                  key={essay.id} 
+                  className="border border-green-500/30 bg-black/30 p-4 rounded-lg"
+                >
+                  <h4 className="text-lg text-green-400 mb-2">{essay.title}</h4>
+                  <div className="text-xs text-green-300/70 mb-2">
+                    {new Date(essay.publishedAt).toLocaleDateString()} 
+                    {essay.category && ` • ${essay.category}`}
+                  </div>
+                  <p className="text-green-300 mb-3">{essay.excerpt}</p>
+                  <a 
+                    href={essay.substackUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-green-400 hover:text-green-300 underline"
+                  >
+                    Read Full Essay →
+                  </a>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-8 text-center">
+              <a 
+                href={substackUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block px-6 py-3 bg-green-900/40 hover:bg-green-800/60 text-green-300 border border-green-500/40 rounded transition-colors"
+              >
+                Subscribe to My Substack
+              </a>
+            </div>
+          </div>
+        );
+      default:
+        return null;
     }
-    
-    return null;
   };
-
-  // Determine if we should show loading
-  const showLoading = loading || (contentLoading && !mounted);
 
   // During SSR, return a simple loading placeholder to avoid hydration mismatch
   if (!isClient) {
@@ -458,66 +486,80 @@ const NodeSystem = () => {
   }
 
   return (
-    <AnimatePresence mode="wait">
-      {showLoading ? (
-        <LoadingSequence />
-      ) : (
-        <motion.div 
-          className="fixed inset-0 overflow-hidden"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-        >
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 pointer-events-none z-10"
-          />
-          
-          <div className="relative z-20">
-            {nodes.map((node, index) => (
-              <motion.div
-                key={node.id}
-                className="absolute"
-                style={{ 
-                  left: node.x,
-                  top: node.y,
-                }}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ 
-                  scale: 1, 
-                  opacity: 1,
-                  transition: { 
-                    delay: index * (isMobile ? 0.05 : 0.1),
-                    duration: 0.5 
-                  } 
-                }}
-              >
-                <BaseNode
-                  id={node.id}
-                  title={node.title}
-                  isLocked={node.isLocked}
-                  isActive={activeNodeId === node.id}
-                  onClick={() => handleNodeClick(node.id)}
-                  isMobile={isMobile}
-                />
-              </motion.div>
-            ))}
-          </div>
-
-          <MatrixModal
-            isOpen={selectedNode !== null}
-            onClose={() => {
-              setSelectedNode(null);
-              setSelectedItemId(null);
-            }}
-            title={getModalTitle()}
-            isMobile={isMobile}
+    <ClientOnly>
+      <AnimatePresence mode="wait">
+        {loading ? (
+          <LoadingSequence />
+        ) : (
+          <motion.div 
+            className="fixed inset-0 overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
           >
-            {renderContent()}
-          </MatrixModal>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 pointer-events-none z-10"
+            />
+            
+            <div className="relative z-20">
+              {nodes.map((node, index) => (
+                <motion.div
+                  key={node.id}
+                  className="absolute"
+                  style={{ 
+                    left: node.x,
+                    top: node.y,
+                  }}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ 
+                    scale: 1, 
+                    opacity: 1,
+                    transition: { 
+                      delay: index * (isMobile ? 0.05 : 0.1),
+                      duration: 0.5 
+                    } 
+                  }}
+                >
+                  <BaseNode
+                    id={node.id}
+                    title={node.title}
+                    isLocked={node.isLocked}
+                    isActive={activeNodeId === node.id}
+                    onClick={() => handleNodeClick(node.id)}
+                    isMobile={isMobile}
+                  />
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Lock message tooltip */}
+            <AnimatePresence>
+              {showLockMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 border border-green-500/40 
+                           px-6 py-3 rounded-lg text-green-400 text-center max-w-xs z-50"
+                >
+                  {showLockMessage}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <MatrixModal
+              isOpen={selectedNode !== null}
+              onClose={() => setSelectedNode(null)}
+              title={selectedNode ? nodeContent[selectedNode as keyof typeof nodeContent]?.title || '' : ''}
+              isMobile={isMobile}
+            >
+              {getNodeContent()}
+            </MatrixModal>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </ClientOnly>
   );
 };
 
