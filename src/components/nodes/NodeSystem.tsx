@@ -14,6 +14,7 @@ import MusicContent from '../content/MusicContent';
 import StickersContent from '../content/StickersContent';
 import EssaysContent from '../content/EssaysContent';
 import ConnectionLine from './ConnectionLine';
+import TextDecoder from '@/components/matrix/TextDecoder';
 
 interface NodeType {
   id: string;
@@ -232,29 +233,37 @@ const NodeSystem = () => {
     }
   };
 
-  // Content rendering
-  const getNodeContent = () => {
-    if (!selectedNode) return null;
-    
-    switch (selectedNode) {
-      case 'intro':
-        return (
-          <div className="whitespace-pre-line h-full flex items-center justify-center">
-            {nodeContent.intro.content}
-          </div>
-        );
-      case 'work':
-        return <WorkContent isMobile={isMobile} />;
-      case 'music':
-        return <MusicContent isMobile={isMobile} />;
-      case 'stickers':
-        return <StickersContent isMobile={isMobile} />;
-      case 'essays':
-        return <EssaysContent isMobile={isMobile} />;
-      default:
-        return null;
-    }
-  };
+// Content rendering
+const getNodeContent = () => {
+  if (!selectedNode) return null;
+  
+  // For the intro node, use our text decoder effect
+  if (selectedNode === 'intro') {
+    return (
+      <div className="whitespace-pre-line h-full flex items-center justify-center">
+        <TextDecoder 
+          text={nodeContent.intro.content}
+          duration={2000}
+          className="text-green-300 block"
+        />
+      </div>
+    );
+  }
+  
+  // Other nodes remain the same
+  switch (selectedNode) {
+    case 'work':
+      return <WorkContent isMobile={isMobile} />;
+    case 'music':
+      return <MusicContent isMobile={isMobile} />;
+    case 'stickers':
+      return <StickersContent isMobile={isMobile} />;
+    case 'essays':
+      return <EssaysContent isMobile={isMobile} />;
+    default:
+      return null;
+  }
+};
 
   // During SSR, return a simple loading placeholder to avoid hydration mismatch
   if (!isClient) {

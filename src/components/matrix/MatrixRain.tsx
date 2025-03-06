@@ -1,5 +1,4 @@
 // src/components/matrix/MatrixRain.tsx
-
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -35,7 +34,6 @@ export const MatrixRain = () => {
 
     // Initialize drops
     const fontSize = 14;
-    // Increase spacing between columns
     const columnSpacing = fontSize * 1.5; // 1.5x spacing between columns
     const columns = Math.ceil(canvas.width / columnSpacing);
     const drops: number[] = new Array(columns).fill(1);
@@ -62,28 +60,38 @@ export const MatrixRain = () => {
       context.fillStyle = 'rgba(0, 0, 0, 0.1)';
       context.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Set the main text color - Using explicit green color
-      context.fillStyle = '#00FF00';
-      context.font = `${fontSize}px monospace`;
-      context.globalAlpha = currentOpacity;
-
       // Draw characters
       for (let i = 0; i < drops.length; i++) {
         // Random character
         const char = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
         
-        // Randomize character brightness
-        const brightness = Math.random() * 0.5 + 0.5; // Between 0.5 and 1
-        context.globalAlpha = currentOpacity * brightness;
+        // Calculate position
+        const x = i * columnSpacing;
+        const y = Math.floor(drops[i]) * fontSize;
+        
+        // Basic opacity
+        context.globalAlpha = currentOpacity;
+        
+        // Completely random glowing (not tied to specific drops)
+        // Just a small percentage of ALL characters will glow randomly
+        if (Math.random() > 0.99) { // 1% chance for any character to glow
+          context.fillStyle = '#5FFF5F'; // Brighter green for highlights
+          context.globalAlpha = 0.9; // Brighter
+        } else {
+          context.fillStyle = '#00FF00'; // Regular green
+        }
         
         // Draw the character
-        context.fillText(char, i * columnSpacing, drops[i] * fontSize);
-
+        context.font = `${fontSize}px monospace`;
+        context.fillText(char, x, y);
+        
         // Reset drops
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+        if (y > canvas.height && Math.random() > 0.975) {
           drops[i] = 0;
         }
-        drops[i]++;
+        
+        // Slow down the rain
+        drops[i] += 0.4; // 40% of original speed
       }
     };
 
