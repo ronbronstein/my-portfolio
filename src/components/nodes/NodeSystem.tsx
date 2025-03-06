@@ -1,19 +1,19 @@
 // src/components/nodes/NodeSystem.tsx
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BaseNode from './BaseNode';
 import MatrixModal from '../shared/MatrixModal';
 import { nodeContent, lockMessages } from '@/data/nodeContent';
-import { projects } from '@/data/projects';
-import { playlists } from '@/data/music';
-import { stickers, shopUrl } from '@/data/stickers';
-import { essays, substackUrl } from '@/data/essays';
-import { MATRIX_THEME } from '@/lib/theme';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import LoadingSequence from '../matrix/LoadingSequence';
 import ClientOnly from '../ClientOnly';
+import WorkContent from '../content/WorkContent';
+import MusicContent from '../content/MusicContent';
+import StickersContent from '../content/StickersContent';
+import EssaysContent from '../content/EssaysContent';
+import ConnectionLine from './ConnectionLine';
 
 interface NodeType {
   id: string;
@@ -36,7 +36,6 @@ const NodeSystem = () => {
   const [activeNodeId, setActiveNodeId] = useState<string>('intro');
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [showLockMessage, setShowLockMessage] = useState<string | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Viewport dimensions - use null for initial SSR state
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -223,7 +222,7 @@ const NodeSystem = () => {
     
     // Check which nodes to unlock based on nodeContent
     const nodeInfo = nodeContent[nodeId as keyof typeof nodeContent];
-    if (nodeInfo && nodeInfo.unlocksNodes) {
+    if (nodeInfo && nodeInfo.unlocksNodes && nodeInfo.unlocksNodes.length > 0) {
       setNodes(prevNodes => 
         prevNodes.map(n => ({
           ...n,
@@ -233,248 +232,25 @@ const NodeSystem = () => {
     }
   };
 
-  // Draw connections
-  useEffect(() => {
-    if (!mounted || loading || !isClient || nodes.length === 0) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const handleResize = () => {
-      if (!canvas) return; // Extra null check here
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      drawConnections(); // Call after resize
-    };
-
-    // Setup canvas
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-    // Draw connections
-    function drawConnections() {
-      if (!canvas || !ctx) return; // Extra null checks
-      
-      // Clear the entire canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw connections between nodes
-      nodes.forEach(node => {
-        if (node.dependencies) {
-          node.dependencies.forEach(depId => {
-            const dependentNode = nodes.find(n => n.id === depId);
-            if (dependentNode) {
-              // Double check ctx isn't null before using it
-              if (!ctx) return;
-              
-              ctx.beginPath();
-
-              const nodeOffset = isMobile ? 40 : 60;
-              const startX = node.x + nodeOffset;
-              const startY = node.y + nodeOffset;
-              const endX = dependentNode.x + nodeOffset;
-              const endY = dependentNode.y + nodeOffset;
-
-              const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
-              
-              if (node.isLocked) {
-                gradient.addColorStop(0, 'rgba(0, 50, 0, 0.3)');
-                gradient.addColorStop(1, 'rgba(0, 50, 0, 0.3)');
-              } else {
-                gradient.addColorStop(0, 'rgba(0, 255, 70, 0.4)');
-                gradient.addColorStop(1, 'rgba(0, 255, 70, 0.1)');
-              }
-
-              ctx.moveTo(startX, startY);
-              ctx.lineTo(endX, endY);
-              ctx.strokeStyle = gradient;
-              ctx.lineWidth = isMobile ? 1 : 2;
-              ctx.stroke();
-            }
-          });
-        }
-      });
-    }
-
-    // Initial draw
-    drawConnections();
-
-    // Cleanup on unmount
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [nodes, activeNodeId, isMobile, mounted, loading, isClient]);
-
-  // Get content based on node type
+  // Content rendering
   const getNodeContent = () => {
     if (!selectedNode) return null;
     
     switch (selectedNode) {
       case 'intro':
         return (
-          <div className="whitespace-pre-line">
+          <div className="whitespace-pre-line h-full flex items-center justify-center">
             {nodeContent.intro.content}
           </div>
         );
       case 'work':
-        return (
-          <div className="space-y-6">
-            <div className="whitespace-pre-line mb-8">
-              {nodeContent.work.content}
-            </div>
-            
-            <h3 className="text-xl text-green-400 mb-4">Featured Projects</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {projects.map(project => (
-                <div 
-                  key={project.id} 
-                  className="border border-green-500/30 bg-black/30 p-4 rounded-lg"
-                >
-                  <h4 className="text-lg text-green-400 mb-2">{project.title}</h4>
-                  <p className="text-green-300 mb-3">{project.description}</p>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {project.technologies.map(tech => (
-                      <span 
-                        key={tech} 
-                        className="px-2 py-1 text-xs bg-green-900/30 text-green-300 rounded-full"
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                  {project.link && (
-                    <a 
-                      href={project.link} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-green-400 hover:text-green-300 underline"
-                    >
-                      Visit Project →
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+        return <WorkContent isMobile={isMobile} />;
       case 'music':
-        return (
-          <div className="space-y-6">
-            <div className="whitespace-pre-line mb-8">
-              {nodeContent.music.content}
-            </div>
-            
-            <h3 className="text-xl text-green-400 mb-4">Featured Playlists</h3>
-            <div className="space-y-8">
-              {playlists.map(playlist => (
-                <div key={playlist.id} className="space-y-4">
-                  <h4 className="text-lg text-green-400">{playlist.title}</h4>
-                  <p className="text-green-300">{playlist.description}</p>
-                  <div className="w-full border border-green-500/30 rounded-md overflow-hidden bg-black/70">
-                    <iframe
-                      src={playlist.spotifyEmbedUrl}
-                      width="100%"
-                      height="352"
-                      frameBorder="0"
-                      allowTransparency={true}
-                      allow="encrypted-media"
-                      className="w-full"
-                    ></iframe>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+        return <MusicContent isMobile={isMobile} />;
       case 'stickers':
-        return (
-          <div className="space-y-6">
-            <div className="whitespace-pre-line mb-8">
-              {nodeContent.stickers.content}
-            </div>
-            
-            <h3 className="text-xl text-green-400 mb-4">Featured Stickers</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {stickers.map(sticker => (
-                <div 
-                  key={sticker.id} 
-                  className="border border-green-500/30 bg-black/30 p-4 rounded-lg"
-                >
-                  <h4 className="text-lg text-green-400 mb-2">{sticker.title}</h4>
-                  <p className="text-green-300 mb-3">{sticker.description}</p>
-                  {sticker.shopUrl && (
-                    <a 
-                      href={sticker.shopUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-green-400 hover:text-green-300 underline"
-                    >
-                      View in Shop →
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-8 text-center">
-              <a 
-                href={shopUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-block px-6 py-3 bg-green-900/40 hover:bg-green-800/60 text-green-300 border border-green-500/40 rounded transition-colors"
-              >
-                Visit Full Sticker Shop
-              </a>
-            </div>
-          </div>
-        );
+        return <StickersContent isMobile={isMobile} />;
       case 'essays':
-        return (
-          <div className="space-y-6">
-            <div className="whitespace-pre-line mb-8">
-              {nodeContent.essays.content}
-            </div>
-            
-            <h3 className="text-xl text-green-400 mb-4">Featured Essays</h3>
-            <div className="space-y-6">
-              {essays.map(essay => (
-                <div 
-                  key={essay.id} 
-                  className="border border-green-500/30 bg-black/30 p-4 rounded-lg"
-                >
-                  <h4 className="text-lg text-green-400 mb-2">{essay.title}</h4>
-                  <div className="text-xs text-green-300/70 mb-2">
-                    {new Date(essay.publishedAt).toLocaleDateString()} 
-                    {essay.category && ` • ${essay.category}`}
-                  </div>
-                  <p className="text-green-300 mb-3">{essay.excerpt}</p>
-                  <a 
-                    href={essay.substackUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-green-400 hover:text-green-300 underline"
-                  >
-                    Read Full Essay →
-                  </a>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-8 text-center">
-              <a 
-                href={substackUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-block px-6 py-3 bg-green-900/40 hover:bg-green-800/60 text-green-300 border border-green-500/40 rounded transition-colors"
-              >
-                Subscribe to My Substack
-              </a>
-            </div>
-          </div>
-        );
+        return <EssaysContent isMobile={isMobile} />;
       default:
         return null;
     }
@@ -496,12 +272,35 @@ const NodeSystem = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
+            suppressHydrationWarning
           >
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 pointer-events-none z-10"
-            />
+            {/* Connection lines - only render on client side */}
+            {isClient && nodes.flatMap(node => 
+              (node.dependencies || []).map(depId => {
+                const dependentNode = nodes.find(n => n.id === depId);
+                if (!dependentNode) return null;
+                
+                const nodeOffset = isMobile ? 10 : 12;
+                const startX = node.x + nodeOffset;
+                const startY = node.y + nodeOffset;
+                const endX = dependentNode.x + nodeOffset;
+                const endY = dependentNode.y + nodeOffset;
+                
+                return (
+                  <ConnectionLine 
+                    key={`${node.id}-${depId}`}
+                    startX={startX}
+                    startY={startY}
+                    endX={endX}
+                    endY={endY}
+                    isActive={!node.isLocked && activeNodeId === depId}
+                    isLocked={node.isLocked}
+                  />
+                );
+              })
+            )}
             
+            {/* Nodes */}
             <div className="relative z-20">
               {nodes.map((node, index) => (
                 <motion.div
@@ -532,7 +331,7 @@ const NodeSystem = () => {
                 </motion.div>
               ))}
             </div>
-
+  
             {/* Lock message tooltip */}
             <AnimatePresence>
               {showLockMessage && (
@@ -547,7 +346,7 @@ const NodeSystem = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-
+  
             <MatrixModal
               isOpen={selectedNode !== null}
               onClose={() => setSelectedNode(null)}

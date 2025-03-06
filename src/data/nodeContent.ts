@@ -1,4 +1,11 @@
-export const nodeContent = {
+// src/data/nodeContent.ts
+interface NodeContentItem {
+  title: string;
+  content: string;
+  unlocksNodes: string[]; // This needs to be defined for all nodes
+}
+
+export const nodeContent: Record<string, NodeContentItem> = {
     intro: {
       title: "Welcome to The Matrix",
       content: `
@@ -50,7 +57,7 @@ export const nodeContent = {
         
         Each sticker tells a story.
       `,
-      unlocksNodes: []
+      unlocksNodes: [] // Empty array, but still defined
     },
     essays: {
       title: "Digital Thoughts",
@@ -64,14 +71,14 @@ export const nodeContent = {
         
         Dive into my thought process.
       `,
-      unlocksNodes: []
+      unlocksNodes: [] // Empty array, but still defined
     }
   };
   
-  // Messages to display when a node is locked
-  export const lockMessages = {
-    work: "Explore my introduction to unlock professional work",
-    music: "Explore my introduction to unlock music section",
-    stickers: "Check out my professional work to unlock stickers",
-    essays: "Listen to my music to unlock essays"
-  };
+// Messages to display when a node is locked
+export const lockMessages: Record<string, string> = {
+  work: "Explore my introduction to unlock professional work",
+  music: "Explore my introduction to unlock music section",
+  stickers: "Check out my professional work to unlock stickers",
+  essays: "Listen to my music to unlock essays"
+};
