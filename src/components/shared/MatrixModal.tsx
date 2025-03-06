@@ -4,6 +4,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import ClientOnly from '../ClientOnly';
+import GlitchEffect from '@/components/matrix/GlitchEffect';
 
 interface MatrixModalProps {
   isOpen: boolean;
@@ -92,13 +93,15 @@ const MatrixModal = ({
             >
               {/* Header */}
               <div className={`${isMobile ? 'p-4' : 'p-6'} border-b border-green-500/30`}>
-                <motion.h2
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold text-green-400 text-center`}
-                >
+              <motion.h2
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold text-green-400 text-center`}
+              >
+                <GlitchEffect intensity="low" isActive={isOpen}>
                   {title}
-                </motion.h2>
+                </GlitchEffect>
+              </motion.h2>
 
                 {/* Close button */}
                 <button
