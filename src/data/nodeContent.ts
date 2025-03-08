@@ -20,13 +20,15 @@ export const nodeContent: Record<string, NodeContentItem> = {
     work: {
       title: "Professional Matrix",
       content: `
-        My professional journey spans across:
+        > System Access: Developer Protocol
         
-        • Software Development
-        • Creative Technology
-        • Digital Innovation
-        • Interactive Experiences
+        $ Skills.list
+        • Software Development [███████████] 95%
+        • Creative Technology [██████████░] 85% 
+        • Digital Innovation [████████░░░] 70%
+        • Interactive Experiences [███████████] 95%
         
+        $ Projects.running
         Each project represents a unique challenge in the digital realm.
       `,
       unlocksNodes: ['stickers']
@@ -34,13 +36,15 @@ export const nodeContent: Record<string, NodeContentItem> = {
     music: {
       title: "Sonic Frequencies",
       content: `
-        Music is my digital pulse:
+        > Audio Subsystem: Active
         
-        • Curated Playlists
-        • Sound Design
-        • Audio Engineering
-        • Musical Projects
+        $ Genres.analyze
+        • Electronic [██████████] 
+        • Ambient [████████░░] 
+        • Experimental [███████░░░]
+        • Soundscapes [██████████]
         
+        $ Audio.stream
         Explore my musical universe.
       `,
       unlocksNodes: ['essays']
@@ -48,13 +52,15 @@ export const nodeContent: Record<string, NodeContentItem> = {
     stickers: {
       title: "Digital Art Matrix",
       content: `
-        AI-generated sticker collection:
+        > Visual Protocol: Initialized
         
-        • Unique Designs
-        • Limited Editions
-        • Custom Collections
-        • Digital Art Fusion
+        $ Designs.render
+        • Unique Patterns [█████████░]
+        • Limited Editions [████████░░]
+        • Custom Collections [███████░░░]
+        • Digital Fusion [██████████]
         
+        $ Art.display
         Each sticker tells a story.
       `,
       unlocksNodes: [] // Empty array, but still defined
@@ -62,19 +68,21 @@ export const nodeContent: Record<string, NodeContentItem> = {
     essays: {
       title: "Digital Thoughts",
       content: `
-        Exploring ideas through writing:
+        > Memory Core: Connected
         
-        • Tech Insights
-        • Creative Process
-        • Industry Analysis
-        • Future Visions
+        $ Thoughts.catalog
+        • Tech Insights [█████████░]
+        • Creative Process [████████░░]
+        • Industry Analysis [███████░░░]
+        • Future Visions [██████████]
         
+        $ Mind.read
         Dive into my thought process.
       `,
       unlocksNodes: [] // Empty array, but still defined
     }
-  };
-  
+};
+
 // Messages to display when a node is locked
 export const lockMessages: Record<string, string> = {
   work: "Explore my introduction to unlock professional work",

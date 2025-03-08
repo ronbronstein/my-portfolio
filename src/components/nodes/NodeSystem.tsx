@@ -15,9 +15,17 @@ import StickersContent from '../content/StickersContent';
 import EssaysContent from '../content/EssaysContent';
 import ConnectionLine from './ConnectionLine';
 import TextDecoder from '@/components/matrix/TextDecoder';
-import { Node } from '@/types';
+import MatrixWipe from '../matrix/MatrixWipe';
 
-
+interface NodeType {
+  id: string;
+  title: string;
+  x: number;
+  y: number;
+  isLocked: boolean;
+  dependencies?: string[];
+  lockMessage?: string;
+}
 
 const NodeSystem = () => {
   // Client-side state flag to prevent hydration mismatches
@@ -26,10 +34,22 @@ const NodeSystem = () => {
   // Basic state
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [wipeActive, setWipeActive] = useState(false);
+  const [contentLoading, setContentLoading] = useState(false);
   const [nodes, setNodes] = useState<NodeType[]>([]);
   const [activeNodeId, setActiveNodeId] = useState<string>('intro');
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [showLockMessage, setShowLockMessage] = useState<string | null>(null);
+  
+  // For arrow key easter eggs
+  const [konamiIndex, setKonamiIndex] = useState(0);
+  const konamiCode = [
+    'ArrowUp', 'ArrowUp', 
+    'ArrowDown', 'ArrowDown', 
+    'ArrowLeft', 'ArrowRight', 
+    'ArrowLeft', 'ArrowRight', 
+    'b', 'a'
+  ];
   
   // Viewport dimensions - use null for initial SSR state
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -68,11 +88,45 @@ const NodeSystem = () => {
       // Give the loading sequence time to complete
       setTimeout(() => {
         setLoading(false);
-      }, 3000); // Shorter loading sequence
+        // Start the wipe effect
+        setWipeActive(true);
+      }, 8000); // Adjust timing based on the LoadingSequence duration
     }, 500);
 
     return () => clearTimeout(timer);
   }, [isClient]); // Only run when isClient changes
+
+  // Add keyboard listener for konami code
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if current key matches next in sequence
+      if (e.key === konamiCode[konamiIndex]) {
+        const nextIndex = konamiIndex + 1;
+        setKonamiIndex(nextIndex);
+        
+        // Check if code is complete
+        if (nextIndex === konamiCode.length) {
+          // Konami code completed! Do something special
+          console.log("KONAMI CODE ACTIVATED!");
+          setKonamiIndex(0);
+          
+          // TODO: Implement special effect when code is completed
+          document.body.classList.add('konami-active');
+          setTimeout(() => {
+            document.body.classList.remove('konami-active');
+          }, 5000);
+        }
+      } else {
+        // Reset sequence on mismatch
+        setKonamiIndex(0);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [konamiIndex, isClient]);
 
   // Calculate node positions based on screen size - safely
   const calculateNodePositions = useMemo(() => {
@@ -138,6 +192,7 @@ const NodeSystem = () => {
       ];
     }
 
+    // For desktop, create a neural web-like layout
     return [
       { 
         id: 'intro', 
@@ -276,6 +331,32 @@ const getNodeContent = () => {
             transition={{ duration: 1 }}
             suppressHydrationWarning
           >
+            {/* Matrix Wipe Effect */}
+            <MatrixWipe 
+              isActive={wipeActive}
+              onComplete={() => {
+                setWipeActive(false);
+                setContentLoading(true);
+                // Add a small delay before showing the content
+                setTimeout(() => {
+                  setContentLoading(false);
+                }, 800);
+              }}
+            />
+            
+            {contentLoading && (
+              <motion.div 
+                className="fixed inset-0 flex items-center justify-center z-30 bg-black"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
+                <div className="text-green-500 text-2xl font-mono">
+                  Loading node system...
+                </div>
+              </motion.div>
+            )}
+            
             {/* Connection lines - only render on client side */}
             {isClient && nodes.flatMap(node => 
               (node.dependencies || []).map(depId => {
