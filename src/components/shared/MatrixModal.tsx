@@ -5,14 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import ClientOnly from '../ClientOnly';
 import GlitchEffect from '@/components/matrix/GlitchEffect';
+import { MatrixModalProps } from '@/types';
 
-interface MatrixModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-  isMobile?: boolean;
-}
+
 
 const modalVariants = {
   hidden: {

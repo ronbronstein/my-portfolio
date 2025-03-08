@@ -4,15 +4,9 @@
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { MATRIX_THEME } from '@/lib/theme';
+import { Node } from '@/types';
 
-export interface NodeProps {
-  id: string;
-  title: string;
-  isLocked?: boolean;
-  isActive?: boolean;
-  isMobile?: boolean;
-  onClick?: () => void;
-}
+export 
 
 const BaseNode = ({ 
   id, 
@@ -29,7 +23,7 @@ const BaseNode = ({
   useEffect(() => {
     if (wasLocked && !isLocked) {
       // Node was just unlocked
-      console.log("Node unlocked:", id);
+      
     }
     setWasLocked(isLocked);
   }, [isLocked, wasLocked, id]);

@@ -15,16 +15,9 @@ import StickersContent from '../content/StickersContent';
 import EssaysContent from '../content/EssaysContent';
 import ConnectionLine from './ConnectionLine';
 import TextDecoder from '@/components/matrix/TextDecoder';
+import { Node } from '@/types';
 
-interface NodeType {
-  id: string;
-  title: string;
-  x: number;
-  y: number;
-  isLocked: boolean;
-  dependencies?: string[];
-  lockMessage?: string;
-}
+
 
 const NodeSystem = () => {
   // Client-side state flag to prevent hydration mismatches

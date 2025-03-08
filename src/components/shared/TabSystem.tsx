@@ -3,18 +3,14 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { TabSystemProps } from '@/types';
 
 interface Tab {
   id: string;
   label: string;
 }
 
-interface TabSystemProps {
-  tabs: Tab[];
-  initialTabId?: string;
-  children: (activeTabId: string) => React.ReactNode;
-  isMobile?: boolean;
-}
+
 
 const TabSystem = ({ 
   tabs, 
